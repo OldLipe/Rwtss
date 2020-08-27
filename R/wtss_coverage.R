@@ -7,12 +7,19 @@
 .wtss_coverage_description <- function(URL, cov){
     
     # retrieve the name of the coverage
-    name <- cov$name
+    if (is.null(cov$name[[1]]))
+        stop("The WTSS not provide the name item.")
+    name <- cov$name[[1]]
 
     # temporal extent
-    timeline <- lubridate::as_date(cov$timeline)
+    if (is.null(cov$timeline[[1]]))
+        stop("The WTSS not provide the timeline item.")
+    
+    timeline <- lubridate::as_date(cov$timeline[[1]])
     
     # retrieve information about the bands
+    if (is.null(attributes))
+        stop("The WTSS not provide the attributes item.")
     band_info <- cov$attributes
     
     attr <- tibble::as_tibble(band_info)
