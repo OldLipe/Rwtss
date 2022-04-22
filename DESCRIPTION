@@ -1,22 +1,39 @@
-Package: wtss
-Title: An R Client for Web Time-Series Service
-Version: 2.2.0
-Authors@R: c(person("Gilberto", "Queiroz", role = c("aut"), email ="gilberto.queiroz@inpe.br"),
-             person("Gilberto", "Camara", role = c("aut", "cre"), email = "gilberto.camara@inpe.br"),
-             person("Pedro", "Andrade", role = c("aut"), email = "pedro.andrade@inpe.br"), 
-             person("Luiz Fernando", "Assis", role = c("aut"), email ="luizffga@dpi.inpe.br"),
-             person("Rolf", "Simoes", role = c("aut"), email ="rolf.simoes@dpi.inpe.br"),          
-             person("Alber", "Sanchez", role = c("aut"), email ="alber.ipia@inpe.br"), 
-             person("Victor", "Maus", role = c("aut"), email ="vwmaus1@gmail.com")
+Package: Rwtss
+Title: Client for Web Time-Series Service
+Version: 0.9.1-1
+Authors@R: c(person(given = "Gilberto", 
+                    family = "Queiroz", 
+                    role = c("aut"), 
+                    email ="gilberto.queiroz@inpe.br",
+                    comment = c(ORCID = "0000-0001-7534-0219")),
+             person(given = "Gilberto", 
+                    family = "Camara", 
+                    role = c("aut"), 
+                    email = "gilberto.camara@inpe.br",
+                    comment = c(ORCID = "0000-0002-3681-487X")),
+             person(given = "Pedro", 
+                    family = "Andrade", 
+                    role = c("aut"), 
+                    email = "pedro.andrade@inpe.br",
+                    comment = c(ORCID = "0000-0001-8675-4046")), 
+             person(given = "Felipe", 
+                    family = "Souza", 
+                    role = c("aut", "cre"), 
+                    email = 'lipecaso@gmail.com'),
+             person(given = "Luiz", 
+                    family = "Assis", 
+                    role = c("aut"), 
+                    email ="luiz.assis@inpe.br")
              )
-Maintainer: Gilberto Camara <gilberto.camara@inpe.br>
-Description: An R client that provides remote access to satellite image time 
-    series using a web time series service. The client allows Earth observation 
-    users to obtain time series. The functions include listing the data sets 
-    available in the server, describing the contents of a data set, and 
-    retrieving a time series based on spatial location and temporal filters.
-URL: https://github.com/e-sensing/wtss/
-BugReports: https://github.com/e-sensing/wtss/issues
+Maintainer: Felipe Souza <lipecaso@gmail.com>
+Description: Allows remote access to satellite image time 
+    series provided by the web time series service (WTSS) available 
+    at servers such as <https://brazildatacube.dpi.inpe.br/wtss/>. 
+    The functions include listing the data sets available in WTSS servers, 
+    describing the contents of a data set, and retrieving a time series 
+    based on spatial location and temporal filters.
+URL: https://github.com/e-sensing/Rwtss/
+BugReports: https://github.com/e-sensing/Rwtss/issues
 ByteCompile: true
 LazyData: true
 License: GPL-3
@@ -32,16 +49,19 @@ Imports:
     lubridate,
     magrittr,
     purrr,
-    RCurl,
+    httr,
     stats,
     stringr,
     tibble,
     zoo
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.2
 Suggests: 
     bfast,
     knitr,
     rmarkdown,
     roxygen2,
-    testthat
+    testthat,
+    spelling,
+    vcr
 VignetteBuilder: knitr
+Language: en-US

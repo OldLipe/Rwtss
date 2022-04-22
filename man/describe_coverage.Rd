@@ -17,8 +17,12 @@ describe_coverage(URL, name, .print = TRUE)
 tibble with coverage description
 }
 \description{
-Contacts the WTSS server to describe one  coverages
+Contacts the WTSS server to describe one coverage
 }
 \examples{
-describe_coverage("http://www.esensing.dpi.inpe.br/wtss", "MOD13Q1")
+\dontrun{
+# Using external server 
+describe_coverage("https://brazildatacube.dpi.inpe.br/wtss/", 
+                  "LC8_30_16D_STK-1")
+}
 }

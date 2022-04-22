@@ -1,18 +1,17 @@
-WTSS - R interface to Web Time Series Service
+Rwtss - R interface to Web Time Series Service
 ================
 
 [![CRAN/METACRAN
-Version](https://www.r-pkg.org/badges/version/wtss)](https://CRAN.R-project.org/package=wtss)
+Version](https://www.r-pkg.org/badges/version/Rwtss)](https://CRAN.R-project.org/package=Rwtss)
 [![CRAN/METACRAN Total
-downloads](http://cranlogs.r-pkg.org/badges/grand-total/wtss?color=blue)](https://CRAN.R-project.org/package=wtss)
-[![Travis-CI Build
-Status](https://travis-ci.com/e-sensing/wtss.svg?branch=master)](https://travis-ci.com/e-sensing/wtss)
-[![Codecov test
-coverage](https://codecov.io/gh/e-sensing/wtss/branch/master/graph/badge.svg)](https://codecov.io/gh/e-sensing/wtss?branch=master)
+downloads](http://cranlogs.r-pkg.org/badges/grand-total/Rwtss?color=blue)](https://CRAN.R-project.org/package=Rwtss)
+[![Build
+Status](https://drone.dpi.inpe.br/api/badges/e-sensing/Rwtss/status.svg)](https://drone.dpi.inpe.br/e-sensing/Rwtss)
+[![codecov](https://codecov.io/gh/e-sensing/Rwtss/branch/master/graph/badge.svg?token=gDsvUHhLmI)](https://codecov.io/gh/e-sensing/Rwtss)
 
 ## About the package
 
-The WTSS-R package is a front-end to the Web Time Series Service (WTSS)
+The Rwtss package is a front-end to the Web Time Series Service (WTSS)
 that offers time series of remote sensing data using a simple API. A
 WTSS server takes as input an Earth observation data cube, that has a
 spatial and a temporal dimension and can be multidimensional in terms of
@@ -31,11 +30,12 @@ organised in regular intervals, so that each measure from sensor is
 mapped into a three dimensional multivariate array in space-time.
 
 The first step towards using the service is connecting to a server that
-supports the WTSS protocol. Currenlty, Brazil’s National Insitute for
+supports the WTSS protocol. Currently, Brazil’s National Institute for
 Space Research (INPE) runs such a WTSS service in the address below.
 
 ``` r
-wtss_inpe <- "http://www.esensing.dpi.inpe.br/wtss"
+# Connect to the WTSS server at INPE Brazil
+wtss_inpe <-  "https://brazildatacube.dpi.inpe.br/wtss/"
 ```
 
 ## Listing coverages available at the WTSS server
@@ -46,9 +46,16 @@ available in a server instance.
 
 ``` r
 # Connect to the WTSS server at INPE Brazil
-wtss::list_coverages(wtss_inpe)
-#> [1] "MOD13Q1"   "MOD13Q1_M"
+Rwtss::list_coverages(wtss_inpe)
 ```
+
+    #>  [1] "MOD13Q1-6"               "MYD13Q1-6"              
+    #>  [3] "S2_10_16D_STK-1"         "S2-SEN2COR_10_16D_STK-1"
+    #>  [5] "S2_10-1"                 "CB4MUX_20-1"            
+    #>  [7] "CB4MUX_20_1M_STK-1"      "LC8_30-1"               
+    #>  [9] "LC8_30_16D_STK-1"        "CB4_20_1M_STK-1"        
+    #> [11] "LC8_30_6M_MEDSTK-1"      "CB4_64_16D_STK-1"       
+    #> [13] "CB4_64-1"                "LANDSAT-MOZ_30_1M_STK-1"
 
 ## Describing a coverage from the WTSS server
 
@@ -57,39 +64,15 @@ its name. It includes its range in the spatial and temporal dimensions.
 
 ``` r
 # Connect to the WTSS server at INPE Brazil
-wtss::describe_coverage(wtss_inpe, name = "MOD13Q1")
-#> ---------------------------------------------------------------------
-#> WTSS server URL = http://www.esensing.dpi.inpe.br/wtss
-#> Cube (coverage) = MOD13Q1
-#> 
-#> satellite  sensor  bands                                        
-#> ---------  ------  ---------------------------------------------
-#> TERRA      MODIS   c("mir", "blue", "nir", "red", "evi", "ndvi")
-#> 
-#> 
-#> |scale_factors                                                                    |
-#> |:--------------------------------------------------------------------------------|
-#> |c(mir = 1e-04, blue = 1e-04, nir = 1e-04, red = 1e-04, evi = 1e-04, ndvi = 1e-04)|
-#> 
-#> 
-#> |minimum_values                                                   |
-#> |:----------------------------------------------------------------|
-#> |c(mir = 0, blue = 0, nir = 0, red = 0, evi = -2000, ndvi = -2000)|
-#> 
-#> 
-#> |maximum_values                                                                   |
-#> |:--------------------------------------------------------------------------------|
-#> |c(mir = 10000, blue = 10000, nir = 10000, red = 10000, evi = 10000, ndvi = 10000)|
-#> 
-#> 
-#> nrows  ncols       xmin  xmax  ymin  ymax      xres      yres  crs                                
-#> -----  -----  ---------  ----  ----  ----  --------  --------  -----------------------------------
-#> 24000  24000  -81.23413   -30   -40    10  0.002087  0.002087  +proj=longlat +datum=WGS84 +no_defs
-#> 
-#> Timeline - 452 time steps
-#> start_date: 2000-02-18 end_date: 2019-09-30
-#> -------------------------------------------------------------------
+desc <- Rwtss::describe_coverage(wtss_inpe, name = "MOD13Q1-6")
 ```
+
+    #> ---------------------------------------------------------------------
+    #> WTSS server URL = https://brazildatacube.dpi.inpe.br/wtss
+    #> Cube (coverage) = MOD13Q1
+    #> Timeline - 486 time steps
+    #> start_date: 2000-02-18 end_date: 2021-03-22
+    #> ---------------------------------------------------------------------
 
 ## Obtaining a time series
 
@@ -104,17 +87,27 @@ retrieved; (d) *longitude*: longitude in WGS84 coordinate system;
 the coverage. If omitted, the first date on the timeline is used; (g)
 *end\_date*(optional): End date in the format yyyy-mm-dd or yyyy-mm
 depending on the coverage. If omitted, the last date of the timeline is
-used.
+used; (h) To access the BDC time series it is necessary to provide a
+token, provide the token through the `token` parameter.
 
 ``` r
 # Request a time series from the "MOD13Q1" coverage
-ndvi_ts <- wtss::time_series(wtss_inpe, "MOD13Q1", attributes = c("ndvi"), latitude = -10.408, longitude = -53.495)
+ndvi_ts   <- Rwtss::time_series(wtss_inpe, 
+                                name = "MOD13Q1-6", 
+                                attributes = c("NDVI", "EVI"), 
+                                longitude = -45.00, 
+                                latitude  = -12.00,
+                                start_date = "2000-02-18", 
+                                end_date = "2016-12-18",
+                                token = "YOUR-BDC-TOKEN")
+```
 
+``` r
 ndvi_ts
 #> # A tibble: 1 x 7
-#>   longitude latitude start_date end_date   label   cube    time_series       
-#>       <dbl>    <dbl> <date>     <date>     <chr>   <chr>   <list>            
-#> 1     -53.5    -10.4 2000-02-18 2019-09-30 NoClass MOD13Q1 <tibble [452 x 2]>
+#>   longitude latitude start_date end_date   label   cube      time_series       
+#>       <dbl>    <dbl> <date>     <date>     <chr>   <chr>     <list>            
+#> 1       -45      -12 2000-02-18 2016-12-18 NoClass MOD13Q1-6 <tibble [388 × 3]>
 ```
 
 The result of the operation is a `tibble` which contains data and
@@ -136,55 +129,18 @@ classifiers.
 ``` r
 # Showing the contents of a time series
 ndvi_ts$time_series[[1]]
-#> # A tibble: 452 x 2
-#>    Index       ndvi
-#>    <date>     <dbl>
-#>  1 2000-02-18 0.884
-#>  2 2000-03-05 0.691
-#>  3 2000-03-21 0.853
-#>  4 2000-04-06 0.854
-#>  5 2000-04-22 0.879
-#>  6 2000-05-08 0.861
-#>  7 2000-05-24 0.853
-#>  8 2000-06-09 0.864
-#>  9 2000-06-25 0.880
-#> 10 2000-07-11 0.870
-#> # ... with 442 more rows
+#> # A tibble: 388 x 3
+#>    Index       NDVI   EVI
+#>    <date>     <dbl> <dbl>
+#>  1 2000-02-18 0.374 0.302
+#>  2 2000-03-05 0.820 0.497
+#>  3 2000-03-21 0.802 0.481
+#>  4 2000-04-06 0.809 0.432
+#>  5 2000-04-22 0.749 0.409
+#>  6 2000-05-08 0.727 0.394
+#>  7 2000-05-24 0.698 0.374
+#>  8 2000-06-09 0.654 0.325
+#>  9 2000-06-25 0.608 0.310
+#> 10 2000-07-11 0.583 0.291
+#> # … with 378 more rows
 ```
-
-## Plotting the time series
-
-For convenience, the **WTSS** package provides a convenience funtion for
-plotting the time series.
-
-``` r
-# Plotting the contents of a time series
-plot(ndvi_ts)
-```
-
-![](man/figures/README-unnamed-chunk-6-1.png)<!-- -->
-
-## Conversion to “zoo” and “ts” formats
-
-Since many time series analysis functions in R require data to be made
-available in the “zoo” and “ts” formats, the *wtss* package provides two
-convenience functions: *wtss\_to\_zoo* and “*wtss\_to\_ts*. The example
-below shows the detection of trends in a series converted to the”ts"
-format using the BFAST package \[@Verbesselt2010\].
-
-``` r
-library(bfast)
-#> Registered S3 method overwritten by 'quantmod':
-#>   method            from
-#>   as.zoo.data.frame zoo
-
-# convert to ts
-ts <- wtss::wtss_to_ts(ndvi_ts, band = "ndvi")
-
-# detect trends
-bf <- bfast::bfast01(ts)
-# plot the result
-plot(bf)
-```
-
-![](man/figures/README-unnamed-chunk-7-1.png)<!-- -->

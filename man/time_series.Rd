@@ -11,7 +11,9 @@ time_series(
   longitude,
   latitude,
   start_date = NULL,
-  end_date = NULL
+  end_date = NULL,
+  token = NULL,
+  ...
 )
 }
 \arguments{
@@ -30,9 +32,13 @@ depending on the coverage.}
 
 \item{end_date}{End date in the format yyyy-mm-dd or yyyy-mm 
 depending on the coverage.}
+
+\item{token}{A character with token to be add in URL.}
+
+\item{...}{Additional parameters that can be added in httr.}
 }
 \value{
-time series in a tibble format (NULL )
+time series in a tibble format (NULL)
 }
 \description{
 Retrieves the time series for a pair of coordinates
@@ -40,10 +46,14 @@ Retrieves the time series for a pair of coordinates
 \examples{
 \dontrun{
 # connect to a WTSS server
-wtss_server <- "http://www.esensing.dpi.inpe.br/wtss"
+wtss_server <- "https://brazildatacube.dpi.inpe.br/wtss/"
 # retrieve a time series
-ndvi_ts <- wtss::time_series(wtss_server, "MOD13Q1", attributes = c("ndvi"), 
-                             latitude = -10.408, longitude = -53.495)
+ndvi_ts <- Rwtss::time_series(wtss_server, 
+                              "LC8_30_16D_STK-1", 
+                              attributes = "NDVI", 
+                              latitude = -14.31, 
+                              longitude = -51.16,
+                              token = "YOUR-BDC-TOKEN")
 # plot the time series
 plot(ndvi_ts)
 }
