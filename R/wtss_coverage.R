@@ -124,7 +124,6 @@
     items <- NULL
     ce <- 0
     
-    
     response <- NULL
     
     # concat list_coverages to the service URL 
