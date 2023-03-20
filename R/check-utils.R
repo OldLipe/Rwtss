@@ -12,6 +12,8 @@
     error = function(e) {
         return(NULL)
     })
+    
+    return(response)
 }
 
 .is_chr <- function(x) {
