@@ -154,16 +154,6 @@ print.describe_coverage <- function(cov.tb){
     return(req_obj$coverages)
 }
 
-.build_url <- function(url, path = NULL, query = NULL, endpoint = NULL) {
-    url <- .rm_trailing_dash(url)
-    parsed <- httr::parse_url(url)
-    parsed[["path"]] <- c(parsed[["path"]], path)
-    parsed[["query"]] <- c(parsed[["query"]], query)
-    parsed[["endpoint"]] <- c(parsed[["endpoint"]], endpoint)
-    
-    return(httr::build_url(parsed))
-}
-
 #' @title Try a best guess for the type of sensor/satellite
 #' @name .wtss_guess_satellite
 #' @author Gilberto Camara, \email{gilberto.camara@@inpe.br}
@@ -198,44 +188,4 @@ print.describe_coverage <- function(cov.tb){
     names(sat_sensor) <-  c("satellite", "sensor")
     
     return(sat_sensor)
-}
-
-#' @title Remove trailing dashes from a WTSS server address
-#' @name  .wtss_remove_trailing_dash
-#'
-#' @description The WTSS URL cannot have a trailing dash. This functions checks
-#' and removes it, if present.
-#' 
-#' @param URL         A WTSS URL
-#' @return            URL without trailing dash
-.wtss_remove_trailing_dash <- function(URL) {
-    # find the length of the URL 
-    url_length   <- stringr::str_length(URL)
-    # locate all dashes in URL and return a data frame
-    url_loc_dash <- stringr::str_locate_all(URL, "/")[[1]]
-    # find out how many rows are there (one row for each dash)
-    nrow_ld <- nrow(url_loc_dash)
-    
-    # find the location of the last dash
-    lg <- as.numeric(url_loc_dash[nrow_ld, "start"])
-    # create a retrun variable
-    url_new <- URL
-    
-    # if there is a trailing dash, remove it
-    if (lg == url_length)
-        url_new <- stringr::str_sub(URL, end = (url_length - 1))
-    
-    return(url_new)
-}
-
-#' @title Remove trailing dashes from a WTSS server address
-#' @name  .rm_trailing_dash
-#'
-#' @description The WTSS URL cannot have a trailing dash. This functions checks
-#' and removes it, if present.
-#' 
-#' @param url         A WTSS URL
-#' @return            URL without trailing dash
-.rm_trailing_dash <- function(url) {
-    gsub(pattern = "/*$", replacement = "", x = url)
 }

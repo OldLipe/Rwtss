@@ -27,6 +27,22 @@ list_coverages <- function(URL) {
   return(coverages)
 }
 
+list_coverages <- function(URL) {
+    # pre-condition
+    .is_valid_url(URL)
+    
+    # try to retrieve the coverage list
+    coverages <- .wtss_list_coverages(URL)
+    
+    # if the coverage list is NULL, the wtss.obj is invalid
+    # TODO: melhorar essa mensagem colocando o status do erro
+    if (is.null(coverages)) {
+        message(paste0("WTSS server at URL ", URL, " not responding"))
+    }
+    
+    return(coverages)
+}
+
 #' @title Retrieves the list of cubes from the URL server
 #' @name  describe_coverage
 #'
@@ -68,25 +84,6 @@ describe_coverage <- function(URL, name, .print = TRUE) {
       .wtss_print_coverage(cov.tb)
   }
   return(invisible(cov.tb))
-}
-
-.is_valid_url <- function(URL) {
-    .is_chr(URL)    
-    if (is.null(.get_request(URL))) {
-        stop("URL is not ...")
-    }
-}
-
-.is_chr <- function(x) {
-    if (!is.character(x)) {
-        stop("Rwtss - parameter should be a character")
-    }
-}
-
-.check_length <- function(x, min = 1, max = Inf) {
-    if (length(x) >= min && length(x) <= max) {
-        stop("invalid ...")
-    }
 }
 
 .wtss_describe_coverage <- function(URL, path, name) {
@@ -274,23 +271,6 @@ time_series <- function(URL,
 }
 
 
-list_coverages <- function(URL) {
-    # pre-condition
-    .check_is_valid_url(URL)
-    
-    # try to retrieve the coverage list
-    coverages <- .wtss_list_coverages(URL)
-    
-    # if the coverage list is NULL, the wtss.obj is invalid
-    # TODO: melhorar essa mensagem colocando o status do erro
-    if (is.null(coverages)) {
-        message(paste0("WTSS server at URL ", URL, " not responding"))
-    }
-    
-    return(coverages)
-}
-
-
 describe_coverage <- function(URL, name, .print = TRUE) {
     # adjust the URL
     URL <- .wtss_remove_trailing_dash(URL)
@@ -313,7 +293,7 @@ describe_coverage <- function(URL, name, .print = TRUE) {
         cov.tb <- .wtss_coverage_description(URL, result)
         # print the content of the coverage
         if (.print)
-            tibble::as_tibble(band_info)      .wtss_print_coverage(cov.tb)
+            .wtss_print_coverage(cov.tb)
     }
     return(invisible(cov.tb))
 }
