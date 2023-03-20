@@ -5,28 +5,29 @@
 #' @param URL       URL of the coverage
 #' @param cov       coverage response provided by WTSS service
 .wtss_coverage_description <- function(URL, cov){
-    
     # retrieve the name of the coverage
-    if (is.null(cov$name))
+    if (is.null(cov$name)) {
         stop("The WTSS not provide the name item.")
+    }
+    
     name <- cov$name
 
     # temporal extent
-    if (is.null(cov$timeline))
-        stop("The WTSS not provide the timeline item.")
+    if (is.null(cov$timeline)) {
+        stop("The WTSS not provide the timeline item.")    
+    }
     
     timeline <- lubridate::as_date(cov$timeline)
     
     # retrieve information about the bands
-    if (is.null(attributes))
+    if (is.null(attributes)) {
         stop("The WTSS not provide the attributes item.")
-    band_info <- cov$attributes
+    }
     
-    attr <- tibble::as_tibble(band_info)
-    bands <- attr$name
+    attr_tbl <- tibble::as_tibble(cov$attributes)
+    bands <- attr_tbl$name
     
-    t <- dplyr::select(dplyr::filter(attr, name %in% bands), 
-                       name, missing_value, scale_factor, valid_range)
+    t <- dplyr::select(attr_tbl, name, missing_value, scale_factor, valid_range)
     missing_values        <- t$missing_value
     names(missing_values) <- t$name
     
@@ -70,7 +71,6 @@
     cov.tb <- tibble::tibble(URL            = URL,
                              satellite      = satellite,
                              sensor         = sensor,
-                             name           = name,
                              bands          = list(bands),
                              scale_factors  = list(scale_factors),
                              missing_values = list(missing_values),
@@ -87,12 +87,34 @@
                              yres           = yres,
                              crs            = crs)
     
-    class(cov.tb) <- append(class(cov.tb), c("sits_cube"), after = 0)
+    class(cov.tb) <- c("describe_cov", "sits_cube", class(cov.tb))
     
     return(cov.tb)
 }
 
 .wtss_print_coverage <- function(cov.tb){
+    cat("---------------------------------------------------------------------")
+    cat(paste0("\nWTSS server URL = ", cov.tb$URL, "\n"))
+    cat(paste0("Cube (coverage) = ", cov.tb$name))
+    
+    print(knitr::kable(dplyr::select(cov.tb, satellite, sensor, bands), 
+                       padding = 0))
+    print(knitr::kable(dplyr::select(cov.tb, scale_factors), padding = 0))
+    print(knitr::kable(dplyr::select(cov.tb, minimum_values), padding = 0))
+    print(knitr::kable(dplyr::select(cov.tb, maximum_values), padding = 0))
+    print(knitr::kable(dplyr::select(cov.tb, nrows, ncols, xmin, xmax, ymin, 
+                                     ymax, xres, yres, crs), padding = 0))
+    # print the timeline
+    timeline <- lubridate::as_date(cov.tb$timeline[[1]])
+    n_time_steps <- length(timeline)
+    cat(paste0("\nTimeline - ",n_time_steps," time steps\n"))
+    cat(paste0("start_date: ", timeline[1], 
+               " end_date: ", timeline[n_time_steps],"\n"))
+    cat("-------------------------------------------------------------------\n")
+}
+
+#' @export 
+print.describe_coverage <- function(cov.tb){
     cat("---------------------------------------------------------------------")
     cat(paste0("\nWTSS server URL = ", cov.tb$URL, "\n"))
     cat(paste0("Cube (coverage) = ", cov.tb$name))
@@ -121,22 +143,25 @@
 #' @param URL      URL of the WTSS service
 #' @return              updated WTSS object.
 .wtss_list_coverages <- function(URL) {
-    items <- NULL
-    ce <- 0
-    
-    response <- NULL
-    
-    # concat list_coverages to the service URL 
-    request <- paste(URL,"/list_coverages",sep = "")
-    
-    # send a request to the WTSS server
-    items <- .wtss_process_request(request)
-    
-    # was the response correct
-    if (purrr::is_null(items))
+    # Build url to send request
+    req_url <- .build_url(url = URL, path = "list_coverages")
+    # Send a request to the WTSS server
+    req_obj <- .wtss_process_request(req_url)
+    # Was the response correct?
+    if (is.null(req_obj)) {
         return(NULL)
-    else
-        return(items$coverages)
+    }
+    return(req_obj$coverages)
+}
+
+.build_url <- function(url, path = NULL, query = NULL, endpoint = NULL) {
+    url <- .rm_trailing_dash(url)
+    parsed <- httr::parse_url(url)
+    parsed[["path"]] <- c(parsed[["path"]], path)
+    parsed[["query"]] <- c(parsed[["query"]], query)
+    parsed[["endpoint"]] <- c(parsed[["endpoint"]], endpoint)
+    
+    return(httr::build_url(parsed))
 }
 
 #' @title Try a best guess for the type of sensor/satellite
@@ -201,4 +226,16 @@
         url_new <- stringr::str_sub(URL, end = (url_length - 1))
     
     return(url_new)
+}
+
+#' @title Remove trailing dashes from a WTSS server address
+#' @name  .rm_trailing_dash
+#'
+#' @description The WTSS URL cannot have a trailing dash. This functions checks
+#' and removes it, if present.
+#' 
+#' @param url         A WTSS URL
+#' @return            URL without trailing dash
+.rm_trailing_dash <- function(url) {
+    gsub(pattern = "/*$", replacement = "", x = url)
 }
