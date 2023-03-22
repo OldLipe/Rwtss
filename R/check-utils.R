@@ -1,43 +1,36 @@
-.is_valid_url <- function(URL) {
+.check_valid_url <- function(URL) {
     .is_chr(URL)    
     if (is.null(.get_request(URL))) {
         stop("URL is not ...")
     }
 }
 
-.get_request <- function(url, ...) {
-    response <- tryCatch({
-        httr::stop_for_status(httr::GET(request, ...))
-    }, 
-    error = function(e) {
-        return(NULL)
-    })
-    
-    return(response)
-}
-
-.is_chr <- function(x) {
-    if (!is.character(x)) {
-        stop("Rwtss - parameter should be a character")
+.check_chr <- function(x, len_min = 1, len_max = Inf) {
+    if (!.is_chr(x)) {
+        stop("Invalid argument. Expected a character")
     }
-}
-
-.check_length <- function(x, min = 1, max = Inf) {
-    if (length(x) >= min && length(x) <= max) {
+    if (length(x) > len_min && length(x) < len_max) {
         stop("invalid ...")
     }
 }
 
-.rm_trailing_dash <- function(url) {
-    gsub(pattern = "/*$", replacement = "", x = url)
+.is_chr <- function(x) {
+    is.character(x)
 }
 
-.build_url <- function(url, path = NULL, query = NULL, endpoint = NULL) {
-    url <- .rm_trailing_dash(url)
-    parsed <- httr::parse_url(url)
-    parsed[["path"]] <- c(parsed[["path"]], path)
-    parsed[["query"]] <- c(parsed[["query"]], query)
-    parsed[["endpoint"]] <- c(parsed[["endpoint"]], endpoint)
-    
-    return(httr::build_url(parsed))
+.is_error <- function(x) {
+    inherits(x, "error")
+}
+
+.is_tbl <- function(x) {
+    inherits(x, c("tbl_df", "tbl", "data.frame"))
+}
+
+`set_class<-` <- function(x, value, append = TRUE) {
+    .is_chr(value)
+    if (append) {
+        value <- c(value, class(x))
+    }
+    class(x) <- value
+    return(x)
 }
