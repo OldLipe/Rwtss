@@ -5,8 +5,6 @@
 \title{Send a request to WTSS server}
 \usage{
 .wtss_send_request(request, ...)
-
-.wtss_send_request(request, ...)
 }
 \arguments{
 \item{request}{valid request according to the WTSS protocol}
@@ -15,11 +13,7 @@
 }
 \value{
 response from the server
-
-response from the server
 }
 \description{
-Sends a request to the WTSS server and times out after 10 tries
-
 Sends a request to the WTSS server and times out after 10 tries
 }

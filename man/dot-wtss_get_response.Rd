@@ -2,9 +2,10 @@
 % Please edit documentation in R/wtss_request.R
 \name{.wtss_get_response}
 \alias{.wtss_get_response}
+\alias{.get_request}
 \title{Get a response to the WTSS server}
 \usage{
-.wtss_get_response(request, ...)
+.get_request(request, n_tries = 3, ...)
 }
 \arguments{
 \item{request}{valid request according to the WTSS protocol}

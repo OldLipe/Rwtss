@@ -4,7 +4,7 @@
 \alias{describe_coverage}
 \title{Retrieves the list of cubes from the URL server}
 \usage{
-describe_coverage(URL, name, .print = TRUE)
+describe_coverage(URL, name)
 }
 \arguments{
 \item{URL}{URL of the server}
