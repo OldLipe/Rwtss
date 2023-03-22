@@ -18,26 +18,6 @@
     return(response)
 }
 
-#' @title Send a request to WTSS server
-#' @name .wtss_send_request
-#'
-#' @description Sends a request to the WTSS server and times out after 10 tries
-#'
-#' @param request   valid request according to the WTSS protocol
-#' @param ...       additional parameters that can be added in httr.
-#' @return  response from the server
-.wtss_send_request <- function(request, ...) {
-    response <- NULL 
-    ce <- 0
-    # try 5 times (avoid time out connection)
-    while (purrr::is_null(response) & ce < 5) {
-        response <- .wtss_get_response(request, ...)
-        ce <- ce + 1
-    }
-    
-    return(response)
-}
-
 #' @title Get a response to the WTSS server
 #' @name .wtss_get_response 
 #'
@@ -46,51 +26,30 @@
 #' @param request   valid request according to the WTSS protocol
 #' @param ...       additional parameters that can be added in httr.
 #' @return  response from the server
-.wtss_get_response <- function(request, ...) {
-     
+.get_request <- function(request, n_tries = 3, ...) {
+    # Sends 3x requests to the WTSS server and gets a response
     response <- tryCatch({
-        httr::stop_for_status(httr::GET(request, ...))
-    }, 
-    error = function(e) {
-        return(NULL)
-    })
+        httr::RETRY(
+            verb = "GET",
+            url = request,
+            times = n_tries,
+            pause_base = 3,
+            pause_cap = 20,
+            pause_min = 1,
+            terminate_on_success = FALSE, ...
+        )}, 
+        error = function(e) {
+            simpleError("Invalid requisition...")
+        })
     
-    if (!purrr::is_null(response))
-        response <- httr::content(response, "text", encoding = "UTF-8")
-    return(response)
-}
-
-#' @title Parse a JSON response from the WTSS server
-#' @name .wtss_parse_json
-#'
-#' @description Parse a JSON response from the WTSS service
-#'
-#' @param response   valid JSON response from the WTSS service
-#' @return  parsed JSON document
-.wtss_parse_json <- function(response) {
-    # validate json
-    if (!purrr::is_null(response) && jsonlite::validate(response)) {
-        json_response <- jsonlite::fromJSON(response)
-        
-        if ("exception" %in% names(json_response))
-            json_response <- NULL
+    if (.is_error(response)) {
+        stop(paste("The requested URL was not possible to reach:", request),
+             call. = FALSE
+        )
     }
-    else
-        json_response <- NULL
     
-    return(json_response)
-}
-
-#' @title Process a request to the WTSS server
-#' @name .wtss_process_request
-#'
-#' @description Process a request 
-#'
-#' @param request   valid request to the WTSS service
-#' @return  parsed JSON document
-.wtss_process_request <- function(request) {
-    # avoid time out connection
-    result <- .wtss_parse_json(.wtss_send_request(request))
-    
-    return(result)
+    httr::stop_for_status(
+        response, task = "Invalid URL. please, ..."
+    )
+    return(response)
 }
