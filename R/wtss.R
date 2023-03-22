@@ -12,34 +12,11 @@
 #' }
 #' @export
 list_coverages <- function(URL) {
-  
-  # adjust the URL
-  URL <- .wtss_remove_trailing_dash(URL)
-  
-  # try to retrieve the coverage list
-  coverages <- .wtss_list_coverages(URL)
-  
-  # if the coverage list is NULL, the wtss.obj is invalid
-  if (purrr::is_null(coverages)) {
-    message(paste0("WTSS server at URL ", URL, " not responding"))
-  }
-  
-  return(coverages)
-}
-
-list_coverages <- function(URL) {
-    # pre-condition
-    .is_valid_url(URL)
-    
-    # try to retrieve the coverage list
-    coverages <- .wtss_list_coverages(URL)
-    
-    # if the coverage list is NULL, the wtss.obj is invalid
-    # TODO: melhorar essa mensagem colocando o status do erro
-    if (is.null(coverages)) {
-        message(paste0("WTSS server at URL ", URL, " not responding"))
-    }
-    
+    # Pre-condition
+    .check_valid_url(URL)
+    # Try to retrieve the coverage list
+    coverages <- .get_coverages(URL)
+    # Return coverages
     return(coverages)
 }
 
