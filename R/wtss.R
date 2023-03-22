@@ -36,68 +36,14 @@ list_coverages <- function(URL) {
 #'                   "LC8_30_16D_STK-1")
 #' }
 #' @export
-describe_coverage <- function(URL, name, .print = TRUE) {
-  # adjust the URL
-  URL <- .wtss_remove_trailing_dash(URL)
-  # only one coverage at a time
-  assertthat::assert_that(length(name) == 1, 
-                          msg = "Rwtss - select only one coverage to describe")
-  result <- NULL
-  
-  # build a "describe_coverage" request
-  request <- paste(URL,"/describe_coverage?name=", name, sep = "")
-  # convert the coverage description into a tibble
-  result <- .wtss_process_request(request)
-  
-  # if the coverage list is NULL, the wtss.obj is invalid
-  if (purrr::is_null(result)) {
-    message(paste0("WTSS service at URL ", URL, "not responding"))
-    return(NULL)
-  }
-  else {
-    cov.tb <- .wtss_coverage_description(URL, result)
-    # print the content of the coverage
-    if (.print)
-      .wtss_print_coverage(cov.tb)
-  }
-  return(invisible(cov.tb))
-}
-
-.wtss_describe_coverage <- function(URL, path, name) {
-    # Build url to send request
-    req_url <- .build_url(url = URL, path = path, query = list("name" = name))
-    # Send a request to the WTSS server
-    req_obj <- .wtss_process_request(req_url)
-    # Was the response correct?
-    if (is.null(req_obj)) {
-        return(NULL)
-    }
-    return(req_obj)
-}
-
-describe_coverage <- function(URL, name, .print = TRUE) {
-    # pre-condition
-    .is_valid_url(URL)
-    .is_chr(name)
-    .check_length(name, min = 1, max = 1)
-    # convert the coverage description into a tibble
-    result <- .wtss_describe_coverage(
-        URL = URL,
-        path = "describe_coverage", 
-        name = name
-    )
-    
-    # if the coverage list is NULL, the wtss.obj is invalid
-    # TODO: melhorar essa mensagem colocando o status do erro
-    # TODO: remover essa mensagem generica
-    if (is.null(result)) {
-        message(paste0("WTSS service at URL ", URL, "not responding"))
-        return(NULL)
-    }
-    # post-processing
-    cov.tb <- .wtss_coverage_description(URL, result)
-    # return
-    return(cov.tb)
+describe_coverage <- function(URL, name) {
+    # Pre-condition
+    .check_valid_url(URL)
+    .check_chr(x = name, len_min = 1, len_max = 1)
+    # Try to retrieve the details of a coverage
+    result <- .get_coverage_details(URL = URL, name = name)
+    # Return ...
+    return(result)
 }
 
 #' @title Get time series
