@@ -37,7 +37,7 @@ list_coverages <- function(URL) {
 #' }
 #' @export
 describe_coverage <- function(URL, name) {
-    # Pre-condition
+    # Pre-conditions
     .check_valid_url(URL)
     .check_chr(x = name, len_min = 1, len_max = 1)
     # Try to retrieve the details of a coverage
@@ -68,12 +68,14 @@ describe_coverage <- function(URL, name) {
 #' # connect to a WTSS server
 #' wtss_server <- "https://brazildatacube.dpi.inpe.br/wtss/"
 #' # retrieve a time series
-#' ndvi_ts <- Rwtss::time_series(wtss_server, 
-#'                               "LC8_30_16D_STK-1", 
-#'                               attributes = "NDVI", 
-#'                               latitude = -14.31, 
-#'                               longitude = -51.16,
-#'                               token = "YOUR-BDC-TOKEN")
+#' ndvi_ts <- Rwtss::time_series(
+#'                URL = wtss_server, 
+#'                name = "LC8_30_16D_STK-1", 
+#'                attributes = "NDVI", 
+#'                latitude = -14.31, 
+#'                longitude = -51.16,
+#'                token = "6SzGipAIMwhkepwVE3fRH7n77nwvZW7ttu18mK3ZiS"
+#' )
 #' # plot the time series
 #' plot(ndvi_ts)
 #' }
@@ -87,108 +89,159 @@ time_series <- function(URL,
                         end_date   = NULL,
                         token = NULL,
                         ...) {
-    # clean the URL
-    URL <- .wtss_remove_trailing_dash(URL)
-    
-    # have we described the coverage before?
-    # if not, get the coverage description
-    # if the description of the coverage is available, skip this part
-    if (purrr::is_null(wtss.env$desc) || wtss.env$desc$name != name) {
-        wtss.env$desc <-  Rwtss::describe_coverage(URL, name, .print = FALSE)
+    # Pre-conditions
+    .check_valid_url(URL)
+    .check_chr(x = name, len_min = 1, len_max = 1)
+    .check_chr(x = attributes)
+    .check_locations(longitude = longitude, latitude = latitude)
+    .check_date(date = start_date, min = start_date, max = end_date)
+    .check_chr(x = token, len_min = 1, len_max = 1)
+    # Have we described the coverage before?
+    if (is.null(wtss.env$desc) || .get_name(wtss.env$desc) != name) {
+        wtss.env$desc <- describe_coverage(URL, name)
         # if describe_coverage fails, return a default time series
-        
-        if (purrr::is_null(wtss.env$desc)) {
-            message(paste0("Rwtss - could not retrieve description of coverage ",
-                           name, " from WTSS server"))
-            message(paste0("Rwtss - retrieving backup time series"))
-            
-            ts.tb <- readRDS(file = system.file("extdata/ndvi_ts.rds", 
-                                                package = "Rwtss"))
-            return(ts.tb)
-        }      
+        # TODO: verificar se chega nulo aqui
+        if (is.null(wtss.env$desc)) {
+            stop(paste("Could not retrieve description of coverage",
+                       name, "from WTSS server."), call. = FALSE)
+        }
     }
     
     # check if the selected attributes are available
-    cov_bands <- wtss.env$desc$bands[[1]]
-    if (purrr::is_null(attributes))
-        attributes <- cov_bands
-    if (!all(attributes %in% cov_bands)) {
-        message("Rwtss - attributes not available.")
-        return(NULL)
-    }
+    coverage_bands <- .get_bands(wtss.env$desc)
+    attributes <- .default(attributes, coverage_bands)
+    .check_bands(attributes, coverage_bands)
     
     # check bounds for latitude and longitude
-    if (longitude < wtss.env$desc$xmin || longitude > wtss.env$desc$xmax) {
-        message("Rwtss - invalid longitude value")
-        return(NULL)
-    }
-    if (latitude < wtss.env$desc$ymin || latitude > wtss.env$desc$ymax) {
-        message("Rwtss - invalid latitude value")
-        return(NULL)
-    }
+    coverage_bbox <- .get_bbox(wtss.env$desc)
+    .check_bbox(longitude, latitude, coverage_bbox)
     
-    # check start and end date
-    timeline <- wtss.env$desc$timeline[[1]]
-    n_dates  <- length(timeline)
+    # Check start and end date
+    timeline <- .get_timeline(wtss.env$desc)
+    start_date <- .default(start_date, min(timeline))
+    end_date <- .default(end_date, max(timeline))
     
-    if (purrr::is_null(start_date))
-        start_date <- lubridate::as_date(timeline[1])
-    if (purrr::is_null(end_date))
-        end_date <- lubridate::as_date(timeline[n_dates])
+    # Check start_date and end_date range is valid
+    # .check_date(start_date, min = min(timeline), max = max(timeline))
+    # .check_date(end_date, min = min(timeline), max = max(timeline))
     
-    # test is start date is valid
-    if (lubridate::as_date(start_date) < lubridate::as_date(timeline[1]) ||
-        lubridate::as_date(start_date) > lubridate::as_date(timeline[n_dates])) {
-        message("Rwtss - invalid start date")
-        return(NULL)
-    }
-    
-    # test if end date is valid
-    if (lubridate::as_date(end_date) <  lubridate::as_date(timeline[1]) ||
-        lubridate::as_date(end_date) >  lubridate::as_date(timeline[n_dates]) ||
-        lubridate::as_date(end_date) <  lubridate::as_date(start_date)) {
-        message("Rwtss - invalid end date")
-        return(NULL)
-    }
-    items <- NULL
-    ce <- 0
-    # try to retrieve the time series 
-    request <- paste(URL,"/time_series?coverage=", name, 
-                     "&attributes=", paste(attributes, collapse = ","),
-                     "&longitude=", longitude, 
-                     "&latitude=", latitude,
-                     "&start_date=", start_date, 
-                     "&end_date=", end_date, sep = "")
-    
-    if (!is.null(token))
-        request <- paste(request, "&access_token=", token, sep = "")
-    
-    # send a request to the WTSS server
-    response <- .wtss_send_request(request, ...)
-    # parse the response 
-    items <- .wtss_parse_json(response)
-    
-    # if the server does not answer any item
-    if (purrr::is_null(items)) {
-        
-        ts.tb <- readRDS(file = system.file("extdata/ndvi_ts.rds", 
-                                            package = "wtss"))
-        return(ts.tb)
-    }
-    
-    if (length(items$result$attributes) == 0)
-        stop(paste("The requisition returns zero attributes as result.",
-                   "Please check your request or contact the server maintenance."))
-    
-    # process the response         
-    result <- list(.wtss_time_series_processing(items))
-    
-    names(result) <- name
-    # convert to tibble 
-    ts.tb <- .wtss_to_tibble(result, name, attributes, longitude, latitude, 
-                             start_date, end_date, wtss.env$desc)
-    #append class         
-    class(ts.tb) <- append(class(ts.tb), c("wtss"), after = 0)
-    
-    return(ts.tb)
+    # Get time series
+    items <- .get_timeseries(
+        URL = URL,
+        name = name, 
+        attributes = attributes,
+        longitude = longitude,
+        latitude = latitude,
+        start_date = start_date,
+        end_date = end_date,
+        token = token
+    )
+    # Return ...
+    return(items)
+}
+
+#' Get .... from wtss objects
+#' 
+#' General function ...
+#' 
+#' @param x ...
+#' 
+#' @return ...
+#'   
+#' @export
+wtss_name <- function(x) {
+    # verify objects
+    .check_s3_class(x, c("describe_coverage", "sits"))
+    return(.get_name(x))
+}
+
+.get_name <- function(x) {
+    UseMethod(".get_name", x)
+}
+
+.get_name.describe_coverage <- function(x) {
+    x[["name"]]
+}
+
+.get_name.sits <- function(x) {
+    return(invisible(x))
+}
+
+#' Get .... from wtss objects
+#' 
+#' General function ...
+#' 
+#' @param x ...
+#' 
+#' @return ...
+#'   
+#' @export
+wtss_bands <- function(x) {
+    .check_s3_class(x, c("describe_coverage", "sits"))
+    return(.get_bands(x))
+}
+
+.get_bands <- function(x) {
+    UseMethod(".get_bands", x)
+}
+
+.get_bands.describe_coverage <- function(x) {
+    x[["bands"]][[1]]
+}
+
+.get_bands.sits <- function(x) {
+    return(invisible(x))
+}
+
+#' Get .... from wtss objects
+#' 
+#' General function ...
+#' 
+#' @param x ...
+#' 
+#' @return ...
+#' 
+#' @export
+wtss_timeline <- function(x) {
+    .check_s3_class(x, c("describe_coverage", "sits"))
+    return(.get_timeline(x))
+}
+
+.get_timeline <- function(x) {
+    UseMethod(".get_timeline", x)
+}
+
+.get_timeline.describe_coverage <- function(x) {
+    lubridate::as_date(x[["timeline"]][[1]])
+}
+
+.get_bands.sits <- function(x) {
+    return(invisible(x))
+}
+
+#' Get .... from wtss objects
+#' 
+#' General function ...
+#' 
+#' @param x ...
+#' 
+#' @return ...
+#' 
+#' @export
+wtss_bbox <- function(x) {
+    .check_s3_class(x, c("describe_coverage", "sits"))
+    return(.get_bbox(x))
+}
+
+.get_bbox <- function(x) {
+    UseMethod(".get_bbox", x)
+}
+
+.get_bbox.describe_coverage <- function(x) {
+    c(xmin = x[["xmin"]], xmax = x[["xmax"]], 
+      ymin = x[["ymin"]], ymax = x[["ymax"]])
+}
+
+.get_bbox.sits <- function(x) {
+    return(invisible(x))
 }
