@@ -48,12 +48,14 @@ Retrieves the time series for a pair of coordinates
 # connect to a WTSS server
 wtss_server <- "https://brazildatacube.dpi.inpe.br/wtss/"
 # retrieve a time series
-ndvi_ts <- Rwtss::time_series(wtss_server, 
-                              "LC8_30_16D_STK-1", 
-                              attributes = "NDVI", 
-                              latitude = -14.31, 
-                              longitude = -51.16,
-                              token = "YOUR-BDC-TOKEN")
+ndvi_ts <- Rwtss::time_series(
+               URL = wtss_server, 
+               name = "LC8_30_16D_STK-1", 
+               attributes = "NDVI", 
+               latitude = -14.31, 
+               longitude = -51.16,
+               token = "6SzGipAIMwhkepwVE3fRH7n77nwvZW7ttu18mK3ZiS"
+)
 # plot the time series
 plot(ndvi_ts)
 }
