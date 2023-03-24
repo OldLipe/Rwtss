@@ -42,6 +42,7 @@
     
     # determine the missing value for each band
     missing_values <- cov_desc$missing_values[[1]]
+    names(missing_values) <- cov_desc$bands[[1]]
     
     # update missing values to NA
     bands %>%
@@ -69,10 +70,10 @@
     # create a tibble to store the WTSS data
     data <- .wtss_tibble()
     
-    if("character" %in% class(start_date))
+    if ("character" %in% class(start_date))
         start_date <- as.Date(start_date)
 
-    if("character" %in% class(end_date))
+    if ("character" %in% class(end_date))
         end_date <- as.Date(end_date)
 
     # add one row to the tibble
