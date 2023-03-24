@@ -6,32 +6,23 @@
 #' @param items  Items retrieved from WTSS server
 #' @return tibble with a time series 
 .wtss_time_series_processing <- function(items) {
-    attr_list <- list(items$result$attributes)
-    
-    attr.processed <- purrr::map(attr_list, function(subdataset) {
+    attr_processed <- purrr::map_dfc(items$result$attributes, function(tbl) {
         # assign attribute values 
-        value <- subdataset$values
-        
-        # assign values to dataframe
-        value <- data.frame(value, stringsAsFactors = FALSE)
-        
+        values <- unlist(tbl[["values"]])
+        # assign values to tibble
+        values <- tibble::tibble(values)
         # dataset names to the values vectors 
-        names(value) <- subdataset$attribute
+        names(values) <- tbl[["attribute"]]
         
-        return(value)
+        return(values)
     })
-    
-    attr.processed <- data.frame(attr.processed, stringsAsFactors = FALSE)
-    
     # convert string into date format
-    timeline <- unlist(strsplit(items$result$timeline, split = " "))
-    
-    timeline <- lubridate::as_date(timeline)
+    timeline <- lubridate::as_date(unlist(items$result$timeline))
     
     return(list(center_coordinate = 
                     data.frame(longitude = items$result$coordinates$longitude, 
                                latitude  = items$result$coordinates$latitude), 
-                attributes = zoo::zoo(attr.processed, timeline)))
+                attributes = zoo::zoo(attr_processed, timeline)))
 }
 
 #' @title Export data to be used to the zoo format
