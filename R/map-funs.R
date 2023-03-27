@@ -1,3 +1,7 @@
+.map <- function(x, fn, ...) {
+    lapply(X = x, FUN = fn, ...)
+}
+
 .map_chr <- function(x, fn, ...) {
     vapply(X = x, FUN = fn, ..., FUN.VALUE = character(1))
 }
