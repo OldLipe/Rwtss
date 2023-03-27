@@ -2,16 +2,16 @@
 % Please edit documentation in R/wtss.R
 \name{wtss_name}
 \alias{wtss_name}
-\title{Get .... from wtss objects}
+\title{Get name attribute from wtss objects}
 \usage{
 wtss_name(x)
 }
 \arguments{
-\item{x}{...}
+\item{x}{a `describe_coverage` and object}
 }
 \value{
 ...
 }
 \description{
-General function ...
+Get name attribute from wtss objects
 }

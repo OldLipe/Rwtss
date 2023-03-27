@@ -7,9 +7,9 @@
 time_series(
   URL,
   name,
-  attributes = NULL,
   longitude,
   latitude,
+  attributes = NULL,
   start_date = NULL,
   end_date = NULL,
   token = NULL,
@@ -21,11 +21,11 @@ time_series(
 
 \item{name}{Coverage name.}
 
-\item{attributes}{Vector of band names.}
-
 \item{longitude}{Longitude in WGS84 coordinate system.}
 
 \item{latitude}{Latitude in WGS84 coordinate system.}
+
+\item{attributes}{Vector of band names.}
 
 \item{start_date}{Start date in the format yyyy-mm-dd or yyyy-mm 
 depending on the coverage.}
@@ -54,7 +54,7 @@ ndvi_ts <- Rwtss::time_series(
                attributes = "NDVI", 
                latitude = -14.31, 
                longitude = -51.16,
-               token = "6SzGipAIMwhkepwVE3fRH7n77nwvZW7ttu18mK3ZiS"
+               token = "change-me"
 )
 # plot the time series
 plot(ndvi_ts)
