@@ -74,7 +74,7 @@ describe_coverage <- function(URL, name) {
 #'                attributes = "NDVI", 
 #'                latitude = -14.31, 
 #'                longitude = -51.16,
-#'                token = "6SzGipAIMwhkepwVE3fRH7n77nwvZW7ttu18mK3ZiS"
+#'                token = "change-me"
 #' )
 #' # plot the time series
 #' plot(ndvi_ts)
@@ -82,13 +82,12 @@ describe_coverage <- function(URL, name) {
 #'@export
 time_series <- function(URL,
                         name,
-                        attributes = NULL,
                         longitude,
                         latitude,
+                        attributes = NULL,
                         start_date = NULL,
-                        end_date   = NULL,
-                        token = NULL,
-                        ...) {
+                        end_date = NULL,
+                        token = NULL, ...) {
     # Pre-conditions
     .check_valid_url(URL)
     .check_chr(x = name, len_min = 1, len_max = 1)
