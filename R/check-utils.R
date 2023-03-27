@@ -28,14 +28,14 @@
         return(NULL)
     }
     
-    if (!.is_date(date) || !.is_chr(date)) {
+    if (!(.is_date(date) || .is_chr(date))) {
         stop(paste("Invalid date parameter.", 
                    "Must be a character or date type."),
              call. = FALSE
         )
     }
-    if (!.is_date(min) || !.is_chr(min) || !is.null(min) &&
-        !.is_date(max) || !.is_chr(max) || is.null(max)) {
+    if (!(.is_date(min) || .is_chr(min) || .is_date(min)) &&
+        !(.is_date(max) || .is_chr(max) || .is_date(max))) {
         stop(paste("Invalid min or max parameters.", 
                    "Must be a character or date type."),
              call. = FALSE
