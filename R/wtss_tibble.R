@@ -55,6 +55,7 @@
     
     # scale the time series
     scale_factors <- cov_desc$scale_factors[[1]]
+    names(scale_factors) <- cov_desc$bands[[1]]
     bands %>%
         purrr::map(function(b) {
             time_series[, b] <<- time_series[, b]*scale_factors[b]
@@ -70,12 +71,6 @@
     # create a tibble to store the WTSS data
     data <- .wtss_tibble()
     
-    if ("character" %in% class(start_date))
-        start_date <- as.Date(start_date)
-
-    if ("character" %in% class(end_date))
-        end_date <- as.Date(end_date)
-
     # add one row to the tibble
     data <- tibble::add_row(data,
                             longitude,
