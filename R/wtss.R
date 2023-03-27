@@ -95,55 +95,24 @@ time_series <- function(URL,
     .check_locations(longitude = longitude, latitude = latitude)
     .check_date(date = start_date, min = start_date, max = end_date)
     .check_chr(x = token, len_min = 1, len_max = 1)
-    # Have we described the coverage before?
-    if (is.null(wtss.env$desc) || .get_name(wtss.env$desc) != name) {
-        wtss.env$desc <- describe_coverage(URL, name)
-        # if describe_coverage fails, return a default time series
-        # TODO: verificar se chega nulo aqui
-        if (is.null(wtss.env$desc)) {
-            stop(paste("Could not retrieve description of coverage",
-                       name, "from WTSS server."), call. = FALSE)
-        }
-    }
-    
-    # check if the selected attributes are available
-    coverage_bands <- .get_bands(wtss.env$desc)
-    attributes <- .default(attributes, coverage_bands)
-    .check_bands(attributes, coverage_bands)
-    
-    # check bounds for latitude and longitude
-    coverage_bbox <- .get_bbox(wtss.env$desc)
-    .check_bbox(longitude, latitude, coverage_bbox)
-    
-    # Check start and end date
-    timeline <- .get_timeline(wtss.env$desc)
-    start_date <- .default(start_date, min(timeline))
-    end_date <- .default(end_date, max(timeline))
-    
-    # Check start_date and end_date range is valid
-    # .check_date(start_date, min = min(timeline), max = max(timeline))
-    # .check_date(end_date, min = min(timeline), max = max(timeline))
-    
     # Get time series
-    items <- .get_timeseries(
+    timeseries <- .get_timeseries(
         URL = URL,
         name = name, 
-        attributes = attributes,
         longitude = longitude,
         latitude = latitude,
+        attributes = attributes,
         start_date = start_date,
         end_date = end_date,
         token = token
     )
-    # Return ...
-    return(items)
+    # Return the extracted time series
+    return(timeseries)
 }
 
-#' Get .... from wtss objects
+#' Get name attribute from wtss objects
 #' 
-#' General function ...
-#' 
-#' @param x ...
+#' @param x a `describe_coverage` and object 
 #' 
 #' @return ...
 #'   
@@ -154,16 +123,14 @@ wtss_name <- function(x) {
     return(.get_name(x))
 }
 
+#' @export
 .get_name <- function(x) {
     UseMethod(".get_name", x)
 }
 
+#' @export
 .get_name.describe_coverage <- function(x) {
-    x[["name"]]
-}
-
-.get_name.sits <- function(x) {
-    return(invisible(x))
+    return(.default(x[["name"]], ""))
 }
 
 #' Get .... from wtss objects
@@ -180,16 +147,20 @@ wtss_bands <- function(x) {
     return(.get_bands(x))
 }
 
+#' @export
 .get_bands <- function(x) {
     UseMethod(".get_bands", x)
 }
 
+#' @export
 .get_bands.describe_coverage <- function(x) {
-    x[["bands"]][[1]]
+    return(x[["bands"]][[1]])
 }
 
+#' @export
 .get_bands.sits <- function(x) {
-    return(invisible(x))
+    col_names <- unlist(.map(x[["time_series"]], colnames), recursive = FALSE)
+    return(setdiff(col_names, "Index"))
 }
 
 #' Get .... from wtss objects
@@ -206,16 +177,20 @@ wtss_timeline <- function(x) {
     return(.get_timeline(x))
 }
 
+#' @export
 .get_timeline <- function(x) {
     UseMethod(".get_timeline", x)
 }
 
+#' @export
 .get_timeline.describe_coverage <- function(x) {
     lubridate::as_date(x[["timeline"]][[1]])
 }
 
+#' @export
 .get_bands.sits <- function(x) {
-    return(invisible(x))
+    timeline <- unlist(unique(.map(x[["time_series"]], `[[`, "Index")))
+    return(lubridate::as_date(timeline))
 }
 
 #' Get .... from wtss objects
@@ -232,15 +207,23 @@ wtss_bbox <- function(x) {
     return(.get_bbox(x))
 }
 
+#' @export
 .get_bbox <- function(x) {
     UseMethod(".get_bbox", x)
 }
 
+#' @export
 .get_bbox.describe_coverage <- function(x) {
-    c(xmin = x[["xmin"]], xmax = x[["xmax"]], 
-      ymin = x[["ymin"]], ymax = x[["ymax"]])
+    bbox <- c(xmin = x[["xmin"]], xmax = x[["xmax"]], 
+              ymin = x[["ymin"]], ymax = x[["ymax"]]
+    )
+    return(bbox)
 }
 
+#' @export
 .get_bbox.sits <- function(x) {
-    return(invisible(x))
+    bbox <- c(xmin = min(x[["longitude"]]), xmax = max(x[["longitude"]]),
+      ymin = min(x[["latitude"]]), ymax = max(x[["latitude"]])
+    )
+    return(bbox)
 }
