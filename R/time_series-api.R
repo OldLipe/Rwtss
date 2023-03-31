@@ -1,3 +1,45 @@
+#' @title Get the next period of time series
+#' @name next_timeseries
+#' 
+#' @description Retrieves the next time series from the paging according to
+#' the specified period
+#' 
+#' @param timeseries a \code{timeseries} object returned in the 
+#'  \code{time_series()} function.
+#' 
+#' @return Time series in a tibble format.
+#' @examples
+#' \dontrun{
+#' # connect to a WTSS server
+#' wtss_server <- "https://brazildatacube.dpi.inpe.br/dev/wtss/v2/"
+#' # Retrieve a time series for a list
+#' polygon <- list(
+#'   type = "Polygon",
+#'   coordinates = list(
+#'     matrix(c(-46.27916, -13.22281,
+#'              -46.27816, -13.22281,
+#'              -46.27816, -13.22181,
+#'              -46.27916, -13.22181,
+#'              -46.27916, -13.22281),
+#'            ncol = 2, byrow = TRUE)
+#'   )
+#' )
+#' # Get the time series
+#' modis_ts <- Rwtss::time_series(
+#'                URL = wtss_server,
+#'                name = "MOD13Q1-6",
+#'                attributes = c("NDVI", "EVI", "red_reflectance"),
+#'                geom = polygon,
+#'                start_date = "2018-01-01T00:00:00Z",
+#'                end_date = "2020-02-01T00:00:00Z",
+#'                scale = TRUE,
+#'                pagination = "P1M",
+#'                token = token
+#' )
+#' # Get the next period of the time series
+#' modis_ts2 <- Rwtss::next_timeseries(modis_ts)
+#' }
+#'@export
 next_timeseries <- function(timeseries) {
     .check_timeseries(timeseries)
     if (!.ts_needs_paginate(timeseries)) {
@@ -30,9 +72,51 @@ next_timeseries <- function(timeseries) {
     attr(results, "response") <- page_response
     attr(results, "req_url") <- req_url 
     set_class(results) <- c("timeseries", "wtss")
-    results
+    return(results)
 }
 
+#' @title Retrieves all time series from every page
+#' @name fetch_timeseries
+#' 
+#' @description Performs the pagination of all time series in the WTSS service.
+#' This operation may take some time depending on the specified paging period.
+#' 
+#' @param timeseries a \code{timeseries} object returned in the 
+#'  \code{time_series()} function.
+#' 
+#' @return Time series in a tibble format.
+#' @examples
+#' \dontrun{
+#' # connect to a WTSS server
+#' wtss_server <- "https://brazildatacube.dpi.inpe.br/dev/wtss/v2/"
+#' # Retrieve a time series for a list
+#' polygon <- list(
+#'   type = "Polygon",
+#'   coordinates = list(
+#'     matrix(c(-46.27916, -13.22281,
+#'              -46.27816, -13.22281,
+#'              -46.27816, -13.22181,
+#'              -46.27916, -13.22181,
+#'              -46.27916, -13.22281),
+#'            ncol = 2, byrow = TRUE)
+#'   )
+#' )
+#' # Get the time series
+#' modis_ts <- Rwtss::time_series(
+#'                URL = wtss_server,
+#'                name = "MOD13Q1-6",
+#'                attributes = c("NDVI", "EVI", "red_reflectance"),
+#'                geom = polygon,
+#'                start_date = "2018-01-01T00:00:00Z",
+#'                end_date = "2020-02-01T00:00:00Z",
+#'                scale = TRUE,
+#'                pagination = "P1M",
+#'                token = token
+#' )
+#' # Get the next period of the time series
+#' all_ts <- Rwtss::fetch_timeseries(modis_ts)
+#' }
+#'@export
 fetch_timeseries <- function(timeseries) {
     .check_timeseries(timeseries)
     # Is it necessary paginate?
@@ -77,9 +161,12 @@ fetch_timeseries <- function(timeseries) {
     
     # Check start_date and end_date range is valid
     timeline <- .get_timeline(cov)
-    start_date <- .default(start_date, value = min(timeline))
-    end_date <- .default(end_date, value = max(timeline))
-    # TODO: format date to datetime
+    start_date <- .format_datetime(
+        .default(start_date, value = min(timeline))
+    )
+    end_date <- .format_datetime(
+        .default(end_date, value = max(timeline))
+    )
     .check_interval(start_date = start_date, end_date = end_date, cov = cov)
     
     # Convert to list to provide to query string    
@@ -103,8 +190,8 @@ fetch_timeseries <- function(timeseries) {
             "applyAttributeScale" = scale,
             "pixelCollisionType" = pixel_strategy
         ),
-        httr::verbose(),
-        encode = "json"
+        encode = "json",
+        httr::verbose()
     )
     # Parse response object
     parsed_response <- .parse_json(response)
