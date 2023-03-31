@@ -26,7 +26,7 @@
     cov_tbl <- .get_cov_metadata(url, parsed_response)
     # Set class
     set_class(cov_tbl) <- c("describe_coverage", "sits_cube") 
-    # Save ...
+    # Save in cache variable
     wtss.env$desc <- cov_tbl
     # Return ...
     return(cov_tbl)
