@@ -1,6 +1,6 @@
-.get_coverages <- function(URL) {
+.get_covs <- function(url) {
     # Build url to send request
-    req_url <- .build_url(url = URL, path = "list_coverages")
+    req_url <- .build_url(url = url, path = "/")
     # Send a request to the WTSS server
     response <- .get_request(req_url)
     # Parse response content
@@ -11,62 +11,59 @@
     return(parsed_response)
 }
 
-.get_coverage_details <- function(URL, name) {
+.get_cov_details <- function(url, name) {
+    # Have we described the coverage before?
+    if (!is.null(wtss.env$desc) && .get_name(wtss.env$desc) == name) {
+        return(wtss.env$desc)
+    }
     # Build url to send request
-    req_url <- .build_url(
-        url = URL, path = "describe_coverage", query = list("name" = name)
-    )
+    req_url <- .build_url(url = url, path = name)
     # Send a request to the WTSS server
     response <- .get_request(req_url)
     # Parse response object
     parsed_response <- .parse_json(response)
     # Post-processing
-    cov_tbl <- .wtss_coverage_description(URL, parsed_response)
+    cov_tbl <- .get_cov_metadata(url, parsed_response)
     # Set class
     set_class(cov_tbl) <- c("describe_coverage", "sits_cube") 
+    # Save ...
+    wtss.env$desc <- cov_tbl
     # Return ...
     return(cov_tbl)
 }
 
-#' @title Decodes the description from a WTSS coverage
-#' @name  .wtss_coverage_description
-#' 
-#' @description creates a tibble to store the description of the WTSS coverage
-#' @param URL       URL of the coverage
-#' @param cov       coverage response provided by WTSS service
-.wtss_coverage_description <- function(URL, parsed_response){
-    name <- parsed_response$name
+.get_cov_metadata <- function(URL, parsed_response){
     timeline <- lubridate::as_date(unlist(parsed_response$timeline))
-    bands <- .map_chr(parsed_response$attributes, `[[`, "name")
+    bands <- .map_chr(parsed_response$bands, `[[`, "name")
     
-    attr_tbl <- .map_dfr(parsed_response$attributes, function(attr) {
+    bds_tbl <- .map_dfr(parsed_response$bands, function(band) {
         tibble::tibble(
-            name = attr[["name"]],
-            scale_factors  = attr[["scale_factor"]],
-            missing_values = attr[["missing_value"]],
-            minimum_values = attr[["valid_range"]][["min"]],
-            maximum_values = attr[["valid_range"]][["max"]]
+            name       = band[["name"]],
+            scale      = band[["scale"]],
+            missing    = band[["nodata"]],
+            min_values = band[["min_value"]],
+            max_values = band[["max_value"]]
         )  
     })
+    
     # Spatial extent
-    xmin <- parsed_response$spatial_extent$xmin
-    ymin <- parsed_response$spatial_extent$ymin
-    xmax <- parsed_response$spatial_extent$xmax
-    ymax <- parsed_response$spatial_extent$ymax
+    bbox <- .format_bbox(parsed_response)
     
     # Spatial resolution
-    xres <- parsed_response$spatial_resolution$x
-    yres <- parsed_response$spatial_resolution$y
+    xres <- unique(.map_dbl(parsed_response$bands, `[[`, "resolution_x"))
+    yres <- unique(.map_dbl(parsed_response$bands, `[[`, "resolution_y"))
     
     # Size (rows and cols)
-    nrows <- parsed_response$dimension$y$max_idx - parsed_response$dimensions$y$min_idx + 1
-    ncols <- parsed_response$dimension$x$max_idx - parsed_response$dimensions$x$min_idx + 1
+    size <- c(
+        nrows = parsed_response$raster_size$y, 
+        ncols = parsed_response$raster_size$x
+    ) 
     
     # Projection CRS
-    crs <- parsed_response$crs$proj4
+    crs <- parsed_response[["bdc:crs"]]
     
     # retrieve the satellite associated to the cube
-    sat_sensor <- .wtss_guess_satellite(xres)
+    sat_sensor <- .cov_guess_sat(xres)
     satellite  <- sat_sensor["satellite"]
     # retrieve the sensor associated to the cube
     sensor <- sat_sensor["sensor"]
@@ -76,49 +73,33 @@
                               satellite      = satellite,
                               sensor         = sensor,
                               bands          = list(bands),
-                              scale_factors  = list(attr_tbl[["scale_factors"]]),
-                              missing_values = list(attr_tbl[["missing_values"]]),
-                              minimum_values = list(attr_tbl[["minimum_values"]]),
-                              maximum_values = list(attr_tbl[["maximum_values"]]),
+                              scale_factors  = list(bds_tbl[["scale"]]),
+                              missing_values = list(bds_tbl[["missing"]]),
+                              minimum_values = list(bds_tbl[["min_values"]]),
+                              maximum_values = list(bds_tbl[["max_values"]]),
                               timeline       = list(timeline),
-                              nrows          = nrows,
-                              ncols          = ncols,
-                              xmin           = xmin,
-                              xmax           = xmax,
-                              ymin           = ymin,
-                              ymax           = ymax,
+                              nrows          = size[["nrows"]],
+                              ncols          = size[["ncols"]],
+                              xmin           = bbox[["xmin"]],
+                              xmax           = bbox[["xmax"]],
+                              ymin           = bbox[["ymin"]],
+                              ymax           = bbox[["ymax"]],
                               xres           = xres,
                               yres           = yres,
                               crs            = crs)
     return(cov_tbl)
 }
 
-#' @title Try a best guess for the type of sensor/satellite
-#' @name .wtss_guess_satellite
-#' @author Gilberto Camara, \email{gilberto.camara@@inpe.br}
-#'
-#' @description    Based on resolution, tries to guess what is the satellite.
-#'
-#' @param xres      xres of the coverage
-#' @return          Satellite sensor pair
-.wtss_guess_satellite <- function(xres) {
-    if (xres < 1.0 ) {
-        # assume that xres is given in decimal degrees
-        # approximate resolution of the coverage 
-        res_m <- geosphere::distGeo(p1 = c(0.0, 0.0), p2 = c(xres, 0.00))
-    }
-    else
-        res_m <- xres
-    
+.cov_guess_sat <- function(xres) {
     #try to guess the satellite
-    if (res_m > 200.0 && res_m < 2000.0) {
+    if (xres > 200.0 && xres < 2000.0) {
         sat_sensor <- c("TERRA", "MODIS")
     }
-    else if (res_m > 60.00 && res_m < 80.0)
+    else if (xres > 60.00 && xres < 80.0)
         sat_sensor <- c("CBERS", "AWFI")
-    else if (res_m > 25.00 && res_m < 35.0)
+    else if (xres > 25.00 && xres < 35.0)
         sat_sensor <- c("LANDSAT", "OLI")
-    else if (res_m < 25.00 && res_m > 5.0)
+    else if (xres < 25.00 && xres > 5.0)
         sat_sensor <- c("SENTINEL-2", "MSI")
     else 
         sat_sensor <- c("UNKNOWN", "UNKNOWN")
