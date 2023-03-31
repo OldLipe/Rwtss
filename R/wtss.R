@@ -1,13 +1,12 @@
 #' @title List the coverages available in the WTSS service
 #' @name list_coverages
 #'
-#' @description Lists coverages available in the WTSS service 
+#' @description Lists coverages available in the WTSS service.
 #'
-#' @param URL       URL of the server
-#' @return          vector with coverage name
+#' @param URL URL of the server
+#' @return a \code{list} with the links and names of each coverage.
 #' @examples
 #' \dontrun{
-#' # Using external server 
 #' list_coverages("https://brazildatacube.dpi.inpe.br/wtss/")
 #' }
 #' @export
@@ -15,24 +14,22 @@ list_coverages <- function(URL) {
     # Pre-condition
     .check_valid_url(URL)
     # Try to retrieve the coverage list
-    coverages <- .get_coverages(URL)
-    # Return coverages
+    coverages <- .get_covs(URL)
+    # Return coverage list
     return(coverages)
 }
 
 #' @title Retrieves the list of cubes from the URL server
 #' @name  describe_coverage
 #'
-#' @description Contacts the WTSS server to describe one coverage
-#' @param URL         URL of the server
-#' @param name        name of coverage
-#' @param .print      Print the coverage description
-#' @return            tibble with coverage description
+#' @description Requests the WTSS server to describe one coverage.
+#' @param URL   URL of the server.
+#' @param name  name of coverage.
+#' @return a \code{tibble} with coverage description.
 #' 
 #' @examples
 #' \dontrun{
-#' # Using external server 
-#' describe_coverage("https://brazildatacube.dpi.inpe.br/wtss/", 
+#' describe_coverage("https://brazildatacube.dpi.inpe.br/wtss/",
 #'                   "LC8_30_16D_STK-1")
 #' }
 #' @export
