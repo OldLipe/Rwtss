@@ -93,6 +93,8 @@
 }
 
 .check_interval <- function(start_date, end_date, cov) {
+    start_date <- lubridate::as_date(start_date)
+    end_date <- lubridate::as_date(end_date)
     timeline <- .get_timeline(cov)
     if (start_date < min(timeline) || end_date > max(timeline)) {
         .error(
