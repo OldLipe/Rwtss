@@ -2,24 +2,26 @@
 % Please edit documentation in R/wtss.R
 \name{describe_coverage}
 \alias{describe_coverage}
-\title{Retrieves the list of cubes from the URL server}
+\title{Retrieves the metadata from one coverage}
 \usage{
 describe_coverage(URL, name)
 }
 \arguments{
-\item{URL}{URL of the server.}
+\item{URL}{a \code{character} with URL of the server.}
 
-\item{name}{name of coverage.}
+\item{name}{a \code{character} with the coverage name.}
 }
 \value{
 a \code{tibble} with coverage description.
 }
 \description{
-Requests the WTSS server to describe one coverage.
+Requests the WTSS server to get the metadata of one coverage.
+The metadata includes minimum, maximum and missing values. 
+Among other information from the coverage.
 }
 \examples{
 \dontrun{
-describe_coverage("https://brazildatacube.dpi.inpe.br/wtss/",
+describe_coverage("https://brazildatacube.dpi.inpe.br/dev/wtss/v2/",
                   "LC8_30_16D_STK-1")
 }
 }

@@ -7,7 +7,7 @@
 summarize(
   URL,
   name,
-  geom = NULL,
+  geom,
   attributes = NULL,
   aggregations = NULL,
   start_date = NULL,

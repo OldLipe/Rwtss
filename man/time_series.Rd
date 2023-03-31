@@ -2,7 +2,7 @@
 % Please edit documentation in R/wtss.R
 \name{time_series}
 \alias{time_series}
-\title{Get time series}
+\title{Extract time series from WTSS service}
 \usage{
 time_series(
   URL,
@@ -21,45 +21,112 @@ time_series(
 )
 }
 \arguments{
-\item{URL}{URL of the server}
+\item{URL}{a \code{character} with URL of the server.}
 
-\item{name}{Coverage name.}
+\item{name}{a \code{character} with the coverage name.}
 
-\item{longitude}{Longitude in WGS84 coordinate system.}
+\item{geom}{a \code{list}, \code{character}, \code{bbox}, 
+\code{sf}, \code{sfc}, \code{sfg}, representing the geometry to be request.
+It is supported the following geometries type: \code{Point}, 
+\code{MultiPoint}, \code{Polygon}, \code{MultiPolygon}. 
+All geometries should be provided in WGS 84 coordinate system. 
+See details below.}
 
-\item{latitude}{Latitude in WGS84 coordinate system.}
+\item{longitude}{a \code{numeric} with longitude in WGS84 coordinate system.}
 
-\item{attributes}{Vector of band names.}
+\item{latitude}{a \code{numeric} with latitude in WGS84 coordinate system.}
 
-\item{start_date}{Start date in the format yyyy-mm-dd or yyyy-mm 
-depending on the coverage.}
+\item{attributes}{a \code{character} with the bands names.}
 
-\item{end_date}{End date in the format yyyy-mm-dd or yyyy-mm 
-depending on the coverage.}
+\item{start_date}{a \code{character} with the start date in 
+format yyyy-mm-dd.}
 
-\item{token}{A character with token to be add in URL.}
+\item{end_date}{a \code{character} with the end date in format yyyy-mm-dd.}
 
-\item{...}{Additional parameters that can be added in httr.}
+\item{pagination}{a \code{character} with the period of pagination follwing
+ISO8601-compliant time period, with number and unit, where "D", "M" and "Y"
+stand for days, month and year; e.g., "P16D" for 16 days.}
+
+\item{scale}{a \code{logical} to apply the attribute scale factor and
+offset along the time series values. Default is FALSE.}
+
+\item{pixel_strategy}{a \code{character} with the geospatial method to 
+retrieve pixel intersection. Options: "center", "upperLeft", "upperRight", 
+"lowerLeft", "lowerRight".}
+
+\item{token}{a \code{character} with token to be add in URL.}
+
+\item{...}{additional parameters that can be added in httr.}
 }
 \value{
-time series in a tibble format (NULL)
+time series in a tibble format.
 }
 \description{
 Retrieves the time series for a pair of coordinates
 }
+\details{
+The parameter \code{geom} can be provided in several ways:
+\itemize{ 
+\item In \code{list} type, geometry should be represented as a GeoJSON, 
+ having \code{type} and \code{coordinates} names. 
+\item In \code{character} type, geometry should be provided as a GeoJSON.
+\item In \code{bbox} type, geometry should be represented as a numeric 
+ vector with the following names: \code{xmin, ymin, xmax, ymin}. 
+\item Any object of \code{sf} package, such as \code{sf}, \code{sfc}, and
+\code{sfg}, is supported.
+}
+}
 \examples{
 \dontrun{
 # connect to a WTSS server
-wtss_server <- "https://brazildatacube.dpi.inpe.br/wtss/"
-# retrieve a time series
-ndvi_ts <- Rwtss::time_series(
+wtss_server <- "https://brazildatacube.dpi.inpe.br/dev/wtss/v2/"
+# retrieve a time series for a point
+l8_ts <- Rwtss::time_series(
                URL = wtss_server, 
                name = "LC8_30_16D_STK-1", 
                attributes = "NDVI", 
                latitude = -14.31, 
                longitude = -51.16,
-               token = "change-me"
+               token = token
 )
+
+# Retrieve a time series for a bbox
+geom <- c(xmin = -46.27916, ymin = -13.22281,
+          xmax = -46.27816, ymax = -13.22181)
+cbers_ts <- Rwtss::time_series(
+               URL = wtss_server,
+               name = "CB4_64_16D_STK-1",
+               attributes = c("NDVI", "EVI"),
+               geom = geom,
+               start_date = "2020-01-01",
+               end_date = "2020-02-01",
+               token = token
+)
+
+# Retrieve a time series for a list
+polygon <- list(
+  type = "Polygon",
+  coordinates = list(
+    matrix(c(-46.27916, -13.22281,
+             -46.27816, -13.22281,
+             -46.27816, -13.22181,
+             -46.27916, -13.22181,
+             -46.27916, -13.22281),
+           ncol = 2, byrow = TRUE)
+  )
+)
+modis_ts <- Rwtss::time_series(
+               URL = wtss_server,
+               name = "MOD13Q1-6",
+               attributes = c("NDVI", "EVI", "red_reflectance"),
+               geom = polygon,
+               start_date = "2018-01-01",
+               end_date = "2020-02-01",
+               scale = TRUE,
+               pagination = "P1M",
+               token = token
+)
+
 # plot the time series
 plot(ndvi_ts)
 }

@@ -7,16 +7,17 @@
 list_coverages(URL)
 }
 \arguments{
-\item{URL}{URL of the server}
+\item{URL}{a \code{character} with URL of the server.}
 }
 \value{
 a \code{list} with the links and names of each coverage.
 }
 \description{
-Lists coverages available in the WTSS service.
+Lists the data products made available by the 
+ WTSS service for extracting and summarizing time series.
 }
 \examples{
 \dontrun{
-list_coverages("https://brazildatacube.dpi.inpe.br/wtss/")
+list_coverages("https://brazildatacube.dpi.inpe.br/dev/wtss/v2/")
 }
 }
