@@ -82,32 +82,135 @@ describe_coverage <- function(URL, name) {
 #'@export
 time_series <- function(URL,
                         name,
-                        longitude,
-                        latitude,
+                        geom = NULL, 
+                        longitude = NULL,
+                        latitude = NULL,
                         attributes = NULL,
                         start_date = NULL,
                         end_date = NULL,
-                        token = NULL, ...) {
+                        pagination = NULL,
+                        scale = FALSE,
+                        pixel_strategy = "center",
+                        token,  ...) {
     # Pre-conditions
     .check_valid_url(URL)
-    .check_chr(x = name, len_min = 1, len_max = 1)
-    .check_chr(x = attributes)
-    .check_locations(longitude = longitude, latitude = latitude)
-    .check_date(date = start_date, min = start_date, max = end_date)
-    .check_chr(x = token, len_min = 1, len_max = 1)
+    .check_chr(name, len_max = 1)
+    .check_spatial(lon = longitude, lat = latitude, geom = geom)
+    .check_temporal(start_date, end_date)
+    .check_chr(attributes, is_null = TRUE)
+    .check_chr(pixel_strategy, within = pixel_strategies, len_max = 1)
+    .check_lgl(scale, is_null = TRUE)
+    .check_period(pagination)
+    .check_chr(token, len_max = 1)
     # Get time series
-    timeseries <- .get_timeseries(
-        URL = URL,
+    timeseries <- .retrieve_timeseries(
+        url = URL,
         name = name, 
+        geom = geom,
         longitude = longitude,
         latitude = latitude,
         attributes = attributes,
         start_date = start_date,
         end_date = end_date,
-        token = token
+        pagination = pagination,
+        scale = scale,
+        pixel_strategy = pixel_strategy,
+        token = token, ...
+    )
+    # Return extracted time series
+    return(timeseries)
+}
+
+#' @title Gets the aggregated time series for an geometry.
+#' @name summarize
+#' @description ... 
+#' 
+#' @param URL           URL of the server
+#' @param name          Coverage name.
+#' @param attributes    Vector of band names.
+#' @param longitude     Longitude in WGS84 coordinate system.
+#' @param latitude      Latitude in WGS84 coordinate system.
+#' @param start_date    Start date in the format yyyy-mm-dd or yyyy-mm 
+#'                      depending on the coverage.
+#' @param end_date      End date in the format yyyy-mm-dd or yyyy-mm 
+#'                      depending on the coverage.
+#' @param token         A character with token to be add in URL.
+#' @param ...           Additional parameters that can be added in httr.
+#' @return              time series in a tibble format (NULL)
+#' @examples
+#' \dontrun{
+#' # connect to a WTSS server
+#' wtss_server <- "https://brazildatacube.dpi.inpe.br/wtss/"
+#' # retrieve a time series
+#' ndvi_ts <- Rwtss::time_series(
+#'                URL = wtss_server, 
+#'                name = "LC8_30_16D_STK-1", 
+#'                attributes = "NDVI", 
+#'                latitude = -14.31, 
+#'                longitude = -51.16,
+#'                token = "change-me"
+#' )
+#' # plot the time series
+#' plot(ndvi_ts)
+#' }
+#'@export
+summarize <- function(URL,
+                      name,
+                      geom = NULL,
+                      attributes = NULL,
+                      aggregations = NULL,
+                      start_date = NULL,
+                      end_date = NULL,
+                      scale = FALSE,
+                      pixel_strategy = "center",
+                      qa_values = NULL,
+                      masked = NULL,
+                      token = NULL, ...) {
+    
+    # Pre-conditions
+    .check_valid_url(URL)
+    .check_chr(x = name, len_min = 1, len_max = 1)
+    .check_chr(x = attributes)
+    .check_chr(
+        x = aggregations, 
+        within = c("min", "max", "mean", "median", "std"),
+        len_min = 1,
+        len_max  = 5
+    )
+    .check_lgl(x = scale)
+    .check_lgl(x = masked, is_null = TRUE)
+    .check_chr(
+        x = pixel_strategy, 
+        within = c("center", "upperLeft", "upperRight", 
+                   "lowerLeft", "lowerRight"),
+        len_min = 1,
+        len_max  = 1
+    )
+    .check_locations(geom = geom)
+    .check_date(
+        x = start_date, 
+        min_date = start_date, 
+        max_date = end_date, 
+        is_null = TRUE
+    )
+    .check_chr(x = token, len_min = 1, len_max = 1)
+    # Get time series
+    summarized_ts <- .summarize_timeseries(
+        url = URL,
+        name = name, 
+        geom = geom,
+        attributes = attributes,
+        aggregations = aggregations,
+        start_date = start_date,
+        end_date = end_date,
+        scale = scale,
+        pixel_strategy = pixel_strategy,
+        qa_values = qa_values,
+        mask = masked,
+        token = token, ...
     )
     # Return the extracted time series
-    return(timeseries)
+    return(summarized_ts)
 }
 
 #' Get name attribute from wtss objects
