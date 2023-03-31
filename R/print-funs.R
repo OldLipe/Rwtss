@@ -1,8 +1,12 @@
 #' @export
 print.coverages <- function(x) {
     cli::cli_h1("Coverages")
+    cli::cli_li("WTSS Version:")
+    cli::cli_ul("{.field {x$wtss_version}}")
+    cli::cli_li("Collections:")
     cli::cli_ul()
-    coverages <- unlist(x$coverages)
+    col_idx <- .map_lgl(x[["links"]], function(item) item[["rel"]] == "data")
+    coverages <- .map_chr(x[["links"]][col_idx], `[[`, "title")
     for (coverage in coverages) {
         cli::cli_ul("{.field {coverage}}")
     }
