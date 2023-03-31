@@ -1,30 +1,3 @@
-
-
-#' @title Processing a Time Series Result from WTSS
-#' @name .wtss_time_series_processing
-#' 
-#' @param items  Items retrieved from WTSS server
-#' @return tibble with a time series 
-.wtss_time_series_processing <- function(items) {
-    attr_processed <- purrr::map_dfc(items$result$attributes, function(tbl) {
-        # assign attribute values 
-        values <- unlist(tbl[["values"]])
-        # assign values to tibble
-        values <- tibble::tibble(values)
-        # dataset names to the values vectors 
-        names(values) <- tbl[["attribute"]]
-        
-        return(values)
-    })
-    # convert string into date format
-    timeline <- lubridate::as_date(unlist(items$result$timeline))
-    
-    return(list(center_coordinate = 
-                    data.frame(longitude = items$result$coordinates$longitude, 
-                               latitude  = items$result$coordinates$latitude), 
-                attributes = zoo::zoo(attr_processed, timeline)))
-}
-
 #' @title Export data to be used to the zoo format
 #' @name wtss_to_zoo
 #' @author Gilberto Camara, \email{gilberto.camara@@inpe.br}
