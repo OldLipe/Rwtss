@@ -1,4 +1,4 @@
-.summarize_timeseries <- function(url,
+.sum_retrieve_summary <- function(url,
                                   name,
                                   geom,
                                   attributes,
@@ -11,34 +11,26 @@
                                   masked,
                                   token, ...) {
     # Have we described the coverage before?
-    .get_coverage_details(URL = url, name = name)
+    cov <- .get_cov_details(url = url, name = name)
     
     # Check if the selected attributes are available
-    coverage_bands <- .get_bands(wtss.env$desc)
-    attributes <- .default(attributes, coverage_bands)
-    .check_bands(attributes, coverage_bands)
+    cov_bands <- .get_bands(cov)
+    attributes <- .default(attributes, value = cov_bands)
+    .check_bands(attributes, cov_bands)
     
-    # Check bounds for latitude and longitude
-    coverage_bbox <- .get_bbox(wtss.env$desc)
     # Create a geom list object
     geom <- .create_geom_lst(geom = geom)
-    # TODO: transform to geom first
-    .check_bbox(geom, coverage_bbox)
-    
-    # Check start and end date
-    # TODO: verify if date is datetime, otherwise transforms it
-    timeline <- .get_timeline(wtss.env$desc)
-    start_date <- .default(start_date, min(timeline))
-    end_date <- .default(end_date, max(timeline))
+    .check_bbox(geom, cov = cov)
     
     # Check start_date and end_date range is valid
-    .check_date(start_date, min_date = min(timeline), max_date = max(timeline))
-    .check_date(end_date, min_date = min(timeline), max_date = max(timeline))
+    timeline <- .get_timeline(cov)
+    start_date <- .default(start_date, value = min(timeline))
+    end_date <- .default(end_date, value = max(timeline))
+    # TODO: format date to datetime
+    .check_interval(start_date = start_date, end_date = end_date, cov = cov)
     
-    # ...
-    if (length(attributes) == 1) {
-        attributes <- list(attributes)
-    }
+    # Convert to list to provide to query string    
+    attributes <- .to_list(attributes)
     # Build url to send request
     req_url <- .build_url(
         url = url, 
@@ -64,16 +56,15 @@
     )
     # Parse response object
     parsed_response <- .parse_json(response)
-    # Check ...
-    .check_results(parsed_response)
-    # ...
+    # Format summarized into a tibble 
     summarize_tbl <- .sum_format_tbl(parsed_response)
-    set_class(summarize_tbl) <- c("timeseries", "wtss")
-    
+    # Set classes in summarize object
+    set_class(summarize_tbl) <- c("summarize")
+    # Return summarize
     return(summarize_tbl)
 }
 
-.sum_format_tbl <- function(response, url) {
+.sum_format_tbl <- function(response) {
     results <- .res_get_results(response)
     ts_tbl <- .map_dfr(seq_len(length(results)), function(idx) {
         # Get each pixel results
@@ -103,7 +94,5 @@
         cube       = .res_get_col_id(response),
         .after = 2
     )
-    attr(ts_tbl, "response") <- response
-    attr(ts_tbl, "req_url") <- url
     return(ts_tbl)
 }
