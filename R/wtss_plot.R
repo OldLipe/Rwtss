@@ -30,9 +30,10 @@
 #' plot(ts)
 #' }
 #' @export
-plot.wtss <- function(x, y, ..., colors = "Dark2") {
-    data <- tibble::as_tibble(x)
-    g <- purrr::map(list(data), function(row) .wtss_ggplot_series(row, colors))
+plot.wtss <- function(x, y, n_plots = 1, ..., colors = "Dark2") {
+    g <- .map(seq_len(n_plots), function(i) {
+        .ts_plot(x[i, ], colors)
+    })
     # return the plot - useful for testing
     return(invisible(g))
 }
@@ -46,14 +47,15 @@ plot.wtss <- function(x, y, ..., colors = "Dark2") {
 #'
 #' @param row         A row of a sits tibble with the time series to be plotted.
 #' @param colors      The set of Brewer colors to be used for plotting.
-.wtss_ggplot_series <- function(row, colors = "Dark2") {
-    # create the plot title
-    plot_title <- paste("Location = (", row$latitude,  ", ", row$longitude, ")",
-                        sep = "")
-    #extract the time series
-    data.ts <- row$time_series
+.ts_plot <- function(ts, colors = "Dark2") {
+    # Create the plot title
+    plot_title <- paste(
+        "Location = (", ts[["latitude"]], ",", ts[["longitude"]], ")"
+    )
+    # Extract the time series
+    data_ts <- ts$time_series[[1]]
     # melt the data into long format
-    melted.ts <- data.ts %>%
+    melted.ts <- data_ts %>%
         reshape2::melt(id.vars = "Index") %>%
         as.data.frame()
     # plot the data with ggplot
