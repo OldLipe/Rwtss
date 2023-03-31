@@ -38,10 +38,14 @@ describe_coverage <- function(URL, name) {
     .check_valid_url(URL)
     .check_chr(x = name, len_min = 1, len_max = 1)
     # Try to retrieve the details of a coverage
-    result <- .get_coverage_details(URL = URL, name = name)
-    # Return ...
+    result <- .get_cov_details(url = URL, name = name)
+    # Return coverage metadata
     return(result)
 }
+
+pixel_strategies <- c(
+    "center", "upperLeft", "upperRight", "lowerLeft", "lowerRight"
+)
 
 #' @title Get time series
 #' @name time_series
@@ -326,4 +330,10 @@ wtss_bbox <- function(x) {
       ymin = min(x[["latitude"]]), ymax = max(x[["latitude"]])
     )
     return(bbox)
+}
+
+.format_bbox <- function(x) {
+    pts <- unlist(x$extent$coordinates, recursive = FALSE)
+    c(xmin = pts[[1]][[1]], ymin = pts[[1]][[2]],
+      xmax = pts[[3]][[1]], ymax = pts[[3]][[2]])
 }
