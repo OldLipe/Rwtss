@@ -10,14 +10,13 @@ list_coverages(URL)
 \item{URL}{URL of the server}
 }
 \value{
-vector with coverage name
+a \code{list} with the links and names of each coverage.
 }
 \description{
-Lists coverages available in the WTSS service
+Lists coverages available in the WTSS service.
 }
 \examples{
 \dontrun{
-# Using external server 
 list_coverages("https://brazildatacube.dpi.inpe.br/wtss/")
 }
 }

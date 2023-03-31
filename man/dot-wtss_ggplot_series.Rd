@@ -2,14 +2,15 @@
 % Please edit documentation in R/wtss_plot.R
 \name{.wtss_ggplot_series}
 \alias{.wtss_ggplot_series}
+\alias{.ts_plot}
 \title{Plot one timeSeries using ggplot}
 \usage{
-.wtss_ggplot_series(row, colors = "Dark2")
+.ts_plot(ts, colors = "Dark2")
 }
 \arguments{
-\item{row}{A row of a sits tibble with the time series to be plotted.}
-
 \item{colors}{The set of Brewer colors to be used for plotting.}
+
+\item{row}{A row of a sits tibble with the time series to be plotted.}
 }
 \description{
 Plots a set of time series using ggplot. This function is used

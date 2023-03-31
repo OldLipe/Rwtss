@@ -7,22 +7,19 @@
 describe_coverage(URL, name)
 }
 \arguments{
-\item{URL}{URL of the server}
+\item{URL}{URL of the server.}
 
-\item{name}{name of coverage}
-
-\item{.print}{Print the coverage description}
+\item{name}{name of coverage.}
 }
 \value{
-tibble with coverage description
+a \code{tibble} with coverage description.
 }
 \description{
-Contacts the WTSS server to describe one coverage
+Requests the WTSS server to describe one coverage.
 }
 \examples{
 \dontrun{
-# Using external server 
-describe_coverage("https://brazildatacube.dpi.inpe.br/wtss/", 
+describe_coverage("https://brazildatacube.dpi.inpe.br/wtss/",
                   "LC8_30_16D_STK-1")
 }
 }

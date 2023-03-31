@@ -5,7 +5,7 @@
 \alias{plot.wtss}
 \title{Generic interface for ploting time series}
 \usage{
-\method{plot}{wtss}(x, y, ..., colors = "Dark2")
+\method{plot}{wtss}(x, y, n_plots = 1, ..., colors = "Dark2")
 }
 \arguments{
 \item{x}{object of class "wtss"}
